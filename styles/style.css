@@ -1,0 +1,34 @@
+body {
+  background: #acc;
+  
+}
+
+.content {
+  width:640px;
+  min-height:500px;
+  margin: 150px auto 0 auto;
+  color: #fff;
+}
+
+.name {
+  width: 100%;
+  opacity: .9;
+  text-align: center;
+  font-family: 'Ubuntu', sans-serif;
+  font-size: 5em;
+}
+
+.icons {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.icon {
+  opacity: .9;
+  padding: 20px;
+  height: 64px;
+}
+
+a {
+  text-decoration: none;
+}
