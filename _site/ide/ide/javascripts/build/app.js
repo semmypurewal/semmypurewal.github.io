@@ -21,7 +21,7 @@ window.jermaine.util.namespace("window.ide.models", function (ns) {
             var that = this,
                 i;
             if (this.url()) {
-                $.post(this.url(), {"slug": this.url()}, function(result) {
+                $.getJSON(this.url(), {"slug": this.url()}, function(result) {
                     if (!result.title || !result.source) {
                         throw new Error("invalid project object");
                     } else {
@@ -445,8 +445,8 @@ window.jermaine.util.namespace("window.ide.models", function (ns) {
                             width = parseInt(dimensions[1], 10);
                             height = parseInt(dimensions[2], 10);
                         } else {
-                            width = 200;
-                            height = 200;
+                            width = 100;
+                            height = 100;
                         }
                         $("#processing_canvas").css('width',width);
                         $("#processing_canvas").css('height',height);

@@ -21,7 +21,7 @@ window.jermaine.util.namespace("window.ide.models", function (ns) {
             var that = this,
                 i;
             if (this.url()) {
-                $.post(this.url(), {"slug": this.url()}, function(result) {
+                $.getJSON(this.url(), {"slug": this.url()}, function(result) {
                     if (!result.title || !result.source) {
                         throw new Error("invalid project object");
                     } else {
