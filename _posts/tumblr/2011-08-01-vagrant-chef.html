@@ -1,0 +1,47 @@
+---
+layout: post
+title: Vagrant + Chef
+date: '2011-08-01T15:34:00-07:00'
+tags:
+- vagrant
+- chef
+- opscode
+- nodejs
+- virtualization
+- virtualbox
+tumblr_url: http://blog.semmy.me/post/8349918517/vagrant-chef
+---
+<p>A few weeks ago I attended a fantastic <a target="_blank" href="http://www.uga.edu/chugalug">CHUGALUG</a> talk by <a target="_blank" href="http://www.twitter.com/greenagain">John Maxwell</a> on two incredible technologies: <a target="_blank" href="http://www.vagrantup.com">Vagrant</a> and <a target="_blank" href="http://opscode.com/chef/">Chef</a>.</p>
+
+<p>Chef is a provisioning tool that essentially allows you to use &#8216;cookbooks&#8217; to provision development or deployment machines.  For example, you can easily script the installation and configuration of a <a target="_blank" href="http://en.wikipedia.org/wiki/LAMP_(software_bundle)">LAMP</a> stack so that it is a repeatable process.</p>
+
+<p>Vagrant is a set of ruby scripts that allows Chef to easily set up and provision VirtualBox images.  In addition, it provides a wonderfully simple front-end for VirtualBox&#8217;s VBoxManage command-line interface.</p>
+
+<p>John uses it at work to help get new devs up to speed quickly.  This seems like a killer use-case: Vagrant+Chef is likely helpful for any collaborative coding project.</p>
+
+<p>On the other hand, I do a lot of coding by myself, so I&#8217;ve been using it for the last few months to create separate working environments for all of my projects.  This way I can get my dev environment as close as possible to my deployment environment without modifying my host machine.  I&#8217;ve successfully built several node.js environments as well as a <a href="http://www.cloudfoundry.com/">CloudFoundry MicroCloud</a> using Vagrant.</p>
+
+<p>Vagrant uses a VagrantFile to set up a new virtual machine.  Here&#8217;s an example from a project that I&#8217;ve been working on:</p>
+
+<div class="code">Vagrant::Config.run do |config|
+
+  # start with a base Ubuntu Lucid32 box (available on vagrantup.com)
+  config.vm.box = &#8220;lucid32&#8221;
+
+  # forward port 3000 on the guest to port 3000 on the host
+  config.vm.forward_port &#8220;express&#8221;, 3000, 3000
+
+  # set up a shared folder
+  config.vm.share_folder &#8220;project&#8221;, &#8220;/home/vagrant/project&#8221;, &#8220;./project&#8221;
+end</div>
+
+<p>Note that I don&#8217;t do any provisioning with Chef in this example;  I simply manage an Ubuntu Virtual Machine for development purposes.  If you&#8217;ve ever had the displeasure of <a href="http://forums.virtualbox.org/viewtopic.php?t=15868">manually setting up shared folders</a> or <a href="http://www.virtualbox.org/manual/ch06.html">port forwarding</a> in VirtualBox, you&#8217;ll see why this can come in handy.</p>
+
+<p>If you&#8217;re setting up run-of-the-mill environments, you can use any of <a href="https://github.com/opscode/cookbooks">OpsCode&#8217;s cookbooks</a> to provision your machine.  For example, creating a cookbooks folder and expanding the VagrantFile as follows sets up a virtual machine with MySQL installed and ready to go.</p>
+
+<div class="code">  config.vm.provision :chef_solo do |chef|
+    chef.cookbooks_path = &#8220;cookbooks&#8221;
+    chef.add_recipe &#8220;mysql&#8221;
+  end</div>
+
+Pretty easy, eh?

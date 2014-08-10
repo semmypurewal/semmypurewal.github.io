@@ -1,0 +1,41 @@
+---
+layout: post
+title: The Pointer-to-Pointer Trick
+date: '2011-09-04T19:12:00-07:00'
+tags:
+- C
+- C++
+- pointers
+tumblr_url: http://blog.semmy.me/post/9809052196/the-pointer-to-pointer-trick
+---
+<p>I learned this trick from Aaron Windsor when I was the TA for his data structures class in 2002.  We were using the Lewis and Deninburg textbook <a target="_blank" href="http://www.amazon.com/gp/product/067339736X/sr=8-1/qid=1315177331/ref=olp_product_details?ie=UTF8&amp;me=&amp;qid=1315177331&amp;sr=8-1&amp;seller=">Data Structures and their Algorithms</a>.  In this book, the authors use a special data structure called a <i>locative</i> to achieve a similar effect at simplifying some of their linked-structure traversal code.</p>
+
+<p>Here&#8217;s a simplified version of a more general scenario: suppose you&#8217;re trying to insert at the end of a linked list of integers, and the list only has a front pointer.  You&#8217;re using the C programming language (although this can be done in C++ as well).</p>
+
+<p>The problem is that the obvious solution has to treat an empty list as a special case.  Consider the following code that inserts an integer into a linked list of integers.</p>
+
+<pre class="code" name="code">void insert(List *the_list, int num_to_insert)  {
+  if(the_list-&gt;front == NULL)
+    the_list-&gt;front = create_node(num_to_insert);
+  else  {
+    LLNode *curr = the_list-&gt;front;
+    while(curr-&gt;next != NULL)
+      curr = curr-&gt;next;
+    curr-&gt;next = node_to_insert;
+  }
+}</pre>
+
+<p>Why treat the empty list as a special case?  After all, you can picture the front pointer as being a next pointer that is not associated with any node.  So if we avoid using pointers to nodes, and instead use pointers to the next pointers, we can avoid the special case altogether since this allows us to treat the front node in exactly the same way.  Here&#8217;s the modified code.</p>
+
+<pre class="code" name="code">void insert(List *the_list, int num_to_insert)  {
+  LLNode **curr = &amp;(the_list-&gt;front);
+  while(*curr != NULL)
+    curr = &amp;((*curr)-&gt;next);
+  *curr = create_node(num_to_insert);
+}</pre>
+
+<p>As far as I can tell, this doesn&#8217;t increase the efficiency of the generated code but it (arguably) simplifies the code by removing a special case.</p>
+
+<p>The trick can handle more complicated inserts as well.  Try modifying the code above so that it inserts into an ordered list.  If you&#8217;re able to do that, try implementing a binary search tree data structure using the same trick for insertion and search.</p>
+
+<p>Note that this code may not be production ready.  You probably want to make sure that your node was actually created since you&#8217;re calling <span class="icode">malloc</span> in the <span class="icode">create_node</span> function.  You can do that in the <span class="icode">create_node</span> function itself by checking the return value of the <span class="icode">malloc</span> function and calling an error function if it is <span class="icode">NULL</span>.</p>

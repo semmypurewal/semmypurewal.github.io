@@ -1,0 +1,142 @@
+---
+layout: post
+title: Vagrant, Chef, and Node.js
+date: '2011-09-16T16:50:00-07:00'
+tags:
+- chef
+- devops
+- nodejs
+- vagrant
+tumblr_url: http://blog.semmy.me/post/10287019340/vagrant-chef-and-node-js
+---
+<p>I <a href="http://blog.semmy.me/2011/08/01/vagrant-chef.html" target="_blank">recently wrote</a> about Vagrant and Chef. I&#8217;ve been using Vagrant as a front-end for VBoxManage for several months now, and I have nothing but awesome things to say about it in that capacity. I&#8217;ve also used Chef to provision virtual machines using some of Opscode&#8217;s frequently used cookbooks.</p>
+
+<p>In addition to that I had previously set up several node.js environments by ssh&#8217;ing into my running virtual machine and manually installing it, but I had never actually provisioned my virtual machine using a node.js recipe for Chef. Today I decided to try doing that.</p>
+
+<p>It turned out to be a bit trickier than I was expecting and so I wrote up some instructions in case you&#8217;re also having trouble getting it to work.</p>
+
+<p>As usual, create a project directory, and then use</p>
+
+<pre class="code">vagrant init</pre>
+
+<p>to create a default vagrant file. We&#8217;ll be using chef-solo in this example, so you&#8217;ll need to create a local directory to store your cookbooks:</p>
+
+<pre class="code">mkdir cookbooks</pre>
+
+<p>By default, Vagrant will look there for cookbooks; you can call it something else, but if you do you&#8217;ll need to modify your vagrant file. Next you&#8217;ll need the opscode build-essential cookbook. You can clone their <a target="_blank" href="https://github.com/opscode/cookbooks">github repository</a> and copy the build-essential cookbook to your cookbooks directory. </p>
+
+<p>Next, you&#8217;ll need to find and download a Chef recipe for node.js. <a href="http://community.opscode.com/cookbooks/nodejs" target="blank">Here</a> is one that was posted in the opscode community. You can download it from the link in the upper-right corner, or you can follow the link to the github page for the repository that holds the recipe and clone it. Either way, you&#8217;ll need to get that directory into your cookbooks directory.</p>
+
+<p>Now you&#8217;ll need to edit your Vagrantfile to include the recipe for node.js. To do so edit the commented out lines that look like</p>
+
+<pre class="code">  # Enable provisioning with chef solo, specifying a cookbooks path (relative
+  # to this Vagrantfile), and adding some recipes and/or roles.
+  #
+  # config.vm.provision :chef_solo do |chef|
+  #   chef.cookbooks_path = "cookbooks"
+  #   chef.add_recipe "mysql"
+  #   chef.add_role "web"
+  #
+  #   # You may also specify custom JSON attributes:
+  #   chef.json = { :mysql_password =&gt; "foo" }
+  # end</pre>
+
+<p>and make them look something like this:</p>
+
+<pre class="code">  config.vm.provision :chef_solo do |chef|
+    chef.add_recipe "nodejs"
+  end</pre>
+
+After that, 
+
+<pre class="code">vagrant up</pre>
+
+should create a new virtual machine and install node.js from source. There&#8217;s only one problem:
+
+<pre class="code">$ vagrant ssh
+Welcome to Ubuntu!
+Last login: Thu Jul 21 13:07:53 2011 from 10.0.2.2
+vagrant@lucid32:~$ node --version
+v0.4.8</pre>
+
+This isn&#8217;t the latest version of node.js. It&#8217;s at v0.5.5 at the time of this writing. Fortunately, the authors of this cookbook were kind enough to include an optional parameter for the node.js recipe that allows you to select the version. If, for example, we wanted to install version 0.5.0 instead of version 0.4.8, we would modify the provisioning section of our Vagrant file so it looks like:
+
+<pre class="code">config.vm.provision :chef_solo do |chef|
+    chef.add_recipe "nodejs"
+    chef.json =	{
+      "nodejs" =&gt; {
+	"version" =&gt; "0.5.0"
+      } 
+    }
+  end</pre>
+
+Now running
+
+<pre class="code">vagrant provision</pre>
+
+will rerun the provisioning scripts giving you a working version of node 0.5.0. You can modify the default.rb file in the attributes directory of the nodejs cookbook if you&#8217;d like to install a later version by default.
+
+But what happens when we try to install version 0.5.5?
+
+<pre class="code">$vagrant provision
+[misc deleted]
+---- Begin output of "bash"  "/tmp/chef-script20110914-3732-r572nn-0" ----
+STDOUT: 
+STDERR: --2011-09-14 14:21:24--  <a href="http://nodejs.org/dist/node-v0.5.5.tar.gz">http://nodejs.org/dist/node-v0.5.5.tar.gz</a>
+Resolving nodejs.org... 8.12.44.238
+Connecting to nodejs.org|8.12.44.238|:80... connected.
+HTTP request sent, awaiting response... 404 Not Found
+2011-09-14 14:21:25 ERROR 404: Not Found.
+---- End output of "bash"  "/tmp/chef-script20110914-3732-r572nn-0" ----
+Ran "bash"  "/tmp/chef-script20110914-3732-r572nn-0" returned 8
+: stdout
+The following SSH command responded with a non-zero exit status.
+Vagrant assumes that this means the command failed!
+
+chef-solo -c /tmp/vagrant-chef-1/solo.rb -j /tmp/vagrant-chef-1/dna.json
+
+The output of the command prior to failing is outputted below:
+
+[no output]</pre>
+
+<p>Sadly, we got a 404 at some stage of the recipe. After a bit of investigating, I discovered that it was due to the fact that the node.js distribution directory structure changed after the 0.5.0 release. <a href="http://nodejs.org/dist/" target="_blank">Take a look for yourself</a>.</p>
+
+So to solve this problem, I had to hack the recipe a bit. Here&#8217;s the original version (from the recipes/default.rb file in the nodejs cookbook directory):
+
+<pre class="code">bash "install nodejs from source" do
+  cwd "/usr/local/src"
+  user "root"
+  code &lt;&lt;-EOH
+    wget <a href="http://nodejs.org/dist/node-v#%7Bnode">http://nodejs.org/dist/node-v#{node</a>[:nodejs][:version]}.tar.gz &amp;&amp; \
+    tar zxf node-v#{node[:nodejs][:version]}.tar.gz &amp;&amp; \
+    cd node-v#{node[:nodejs][:version]} &amp;&amp; \
+    ./configure --prefix=#{node[:nodejs][:dir]} &amp;&amp; \
+    make &amp;&amp; \
+    make install
+  EOH
+  not_if "#{node[:nodejs][:dir]}/bin/node -v 2&gt;&amp;1 \
+            | grep 'v#{node[:nodejs][:version]}'"
+end</pre>
+
+I changed it so that the path is dependent on the version of node:
+
+<pre class="code">path = node[:nodejs][:version]&gt;"0.5.0"?
+            "http://nodejs.org/dist/v#{node[:nodejs][:version]}/":
+            "http://nodejs.org/dist/"
+
+bash "install nodejs from source" do
+  cwd "/usr/local/src"
+  user "root"
+  code &lt;&lt;-EOH
+    wget #{path}node-v#{node[:nodejs][:version]}.tar.gz &amp;&amp; \
+    tar zxf node-v#{node[:nodejs][:version]}.tar.gz &amp;&amp; \
+    cd node-v#{node[:nodejs][:version]} &amp;&amp; \
+    ./configure --prefix=#{node[:nodejs][:dir]} &amp;&amp; \
+    make &amp;&amp; \
+    make install
+  EOH
+  not_if "#{node[:nodejs][:dir]}/bin/node -v 2&gt;&amp;1 \
+             | grep 'v#{node[:nodejs][:version]}'"
+end</pre>
+
+I&#8217;m not that familiar with writing chef recipes, so I hope that I haven&#8217;t done anything wrong here. In the end, however, this worked perfectly for me.

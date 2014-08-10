@@ -1,0 +1,70 @@
+---
+layout: post
+title: Vagrant 1.1.0 and node-dev-bootstrap
+date: '2013-03-17T15:21:00-07:00'
+tags: []
+tumblr_url: http://blog.semmy.me/post/45607300220/vagrant-1-1-0-and-node-dev-bootstrap
+---
+<p><a href="http://vagrantup.com" target="_blank">Vagrant</a> is a tool that helps build a development environment using a virtual machine provider (like VMWare or VirtualBox). In our class, we&#8217;ll use Vagrant with VirtualBox to build a <a href="http://nodejs.org" target="_blank">node.js</a> development stack that includes some modern data storage tools (<a href="http://mongodb.org" target="_blank">mongodb</a> and <a href="http://redis.io" target="_blank">redis</a>).</p>
+
+<p>Obviously, part of this process is about convenience: even though installing a node.js development environment on your local machine is pretty easy (and I encourage you to do it!), adding a full server-stack including mongodb and redis is non-trivial and takes a bit of time and patience.</p>
+
+<p>Another reason we&#8217;re doing this is consistency. Since I&#8217;m controlling the VagrantFile, I&#8217;m able to control the versions of node, mongodb and redis that you have installed. Furthermore, using Vagrant allows us to all have the same development environment running whether you&#8217;re using Windows or MacOS. This will (hopefully) minimize any issues arising because of version inconsistencies.</p>
+
+<p>Last, but not least, using vagrant to provision our server is useful from a pedagogical perspective; it more clearly separates the client-side portion of our course from the server-side. Since most of what you&#8217;ll be doing for the rest of this course involves server-side programming, it makes sense to &#8216;separate out&#8217; the server in a very explicit way.</p>
+
+<p>So how do we set this up?</p>
+
+<p>First, you&#8217;ll need to install the latest version of VirtualBox. At the time of this writing, that is version 4.2.10. You can go to <a href="http://virtualbox.org" target="_blank">virtualbox.org</a>, click on the &#8220;Downloads&#8221; link on the left side of the page, and download the appropriate version for your platform. Once downloaded, the installation process will depend on your platform, but you should be able to figure it out at this point.</p>
+
+<p>Second, you&#8217;ll need to install the latest version of Vagrant. It turns out that version 1.1 was just released <a target="_blank" href="http://www.hashicorp.com/blog/vagrant-1-1-and-vmware.html">last week</a>, and offers some nice new features. You can go to <a href="http://vagrantup.com" target="_blank">vagrantup.com</a>, click on the &#8220;Downloads&#8221;  link in the upper right hand corner, click on v1.1.0 (or the latest available 1.1.x version), and grab the latest installer for your platform (hint: if you&#8217;re installing it in MacOS it&#8217;s Vagrant.dmg, and if you&#8217;re installing it in Windows it&#8217;s Vagrant.msi). After downloading it, double click on the package and install it in the same way you installed VirtualBox.</p>
+
+<p>If you&#8217;re running Windows, you may have to reboot your machine after the installation to make sure your file path is set up correctly. You can test this out by opening a command window (click on your Start menu, and type &#8216;cmd&#8217; into the search box) and typing &#8216;vagrant &#8212;version&#8217; at the prompt:</p>
+
+<pre class="code">C:\Users\semmy&gt;vagrant --version
+Vagrant version 1.1.0</pre>
+
+<p>If that works, you&#8217;re ready to go. If it doesn&#8217;t, reboot your machine and try typing the vagrant command again.</p>
+
+<p>If all is well, then you&#8217;re ready to get the git repository called node-dev-bootstrap from my github page. If you&#8217;re using Windows this will require you opening your git-bash prompt. In either case, go into the directory you&#8217;d like to use (most likely your Projects directory) and clone it using the following command:</p>
+
+<pre class="code">$ git clone <a href="https://github.com/semmypurewal/node-dev-bootstrap">https://github.com/semmypurewal/node-dev-bootstrap</a></pre>
+
+<p>Now if you&#8217;re using Windows, the next part may or may not work. There&#8217;s <a href="https://groups.google.com/forum/?fromgroups=#!topic/vagrant-up/KwmEHx6Wqgs" target="_blank">an issue with the Windows installer</a> for Vagrant that may cause an error with the following commands. The error will say something along the lines of &#8220;a program called &#8216;uname.exe&#8217; has thrown an exception.&#8221; <a href="https://twitter.com/mitchellh" target="_blank">Mitchell Hashimoto</a> has said that there will be a fix for this in the next couple of days, so hopefully it will no longer be an issue by the time you read this.</p>
+
+<p>If this <i>is</i> an issue for you, then you&#8217;ll need to open up a Windows command prompt (as described above), enter your directory and run the following commands from there instead of in your git bash prompt.</p>
+
+<p>All that being said, go ahead and enter the project directory and type &#8216;vagrant up&#8217;:</p>
+
+<pre class="code">$ cd node-dev-bootstrap
+$ vagrant up</pre>
+
+<p>If everything worked correctly, vagrant will build your Virtual Machine. This will take a few minutes. Be patient.</p>
+
+<p>Once it&#8217;s finished, your server should be running. How do you check? You&#8217;ll need to use a network technology called SSH (which stands for &#8216;Secure SHell&#8217;) to connect to the server.</p>
+
+<p>If you&#8217;re using MacOS, it&#8217;s pretty easy since your platform comes with a built-in ssh client. If you&#8217;re running windows, however, it&#8217;s a little more complicated because you&#8217;ll need to manually install an SSH client.</p>
+
+<p>Either way, go ahead and type:</p>
+
+<pre class="code">$ vagrant ssh</pre>
+
+<p>If you&#8217;re running MacOS, it will connect you to your virtual machine. If you&#8217;re running Windows, it will give you the login credentials (most likely the host will be 127.0.0.1 and the port will be 2222). So now you&#8217;ll need to download an SSH client to connect &#8212; I recommend putty which is available <a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html" target="_blank">here</a>. When you open up putty, you&#8217;ll type in the  Host and the Port that vagrant specified into the appropriate input boxes, and then click &#8220;Open.&#8221; Putty will connect to your virtual server and ask you for a username and password. Both of these should be pre-set to &#8216;vagrant.&#8217;</p>
+
+<p>Once you&#8217;re logged in, go into the &#8216;app&#8217; directory of your server and type node server.js:</p>
+
+<pre class="code">$ node server.js</pre>
+
+<p>Finally, go to your web browser on your host machine and type localhost:3000 in your address bar. If everything worked correctly, you should see a &#8216;Hello World&#8217; message. You can stop the program by hitting CTRL-C.</p>
+
+<p>Once you&#8217;re done working, you can exit out of your virtual server by typing in &#8216;exit.&#8217; Then you can kill your vagrant box in one of two ways. You can either type</p>
+
+<pre class="code">$ vagrant halt</pre>
+
+<p>to just stop the box from running or you can type</p>
+
+<pre class="code">$ vagrant destroy</pre>
+
+<p>to completely get rid of the box. That will cause it to be rebuilt next time you type &#8220;vagrant up&#8221; from that directory.</p>
+
+<p>You&#8217;ll want to do one of these every time you finish working, because having a virtual machine running in the background will definitely be a drain on your computer&#8217;s resources.</p>

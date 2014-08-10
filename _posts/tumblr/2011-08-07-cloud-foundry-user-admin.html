@@ -1,0 +1,42 @@
+---
+layout: post
+title: Cloud Foundry User Admin
+date: '2011-08-07T14:54:00-07:00'
+tags:
+- cloudfoundry
+- sysadmin
+- paas
+tumblr_url: http://blog.semmy.me/post/8608660840/cloud-foundry-user-admin
+---
+<p><a target="_blank" href="http://www.cloudfoundry.org">Cloud Foundry</a> doesn&#8217;t make user administration tasks easy (although it&#8217;s such a new platform that I forgive them for that).  If you have a micro cloud set up, you&#8217;ll need to be an administrator to make changes to users.  In order to become an administrator, ssh into your micro cloud and open the following file in a text editor:</p>
+
+<div class="code">emacs ~/cloudfoundry/vcap/cloud_controller/config/cloud_controller.yml
+</div>
+
+<p>Find the line that says:</p>
+
+<div class="code">admins: [derek@gmail.com, foobar@vmware.com]
+</div>
+
+<p>and add the e-mail address that you initially used to create an account to the list (or replace the other two e-mail addresses with yours).</p>
+
+<p>Now, restart the vcap cloud_controller component:</p>
+
+<div class="code">~/cloudfoundry/vcap/bin/vcap restart cloud_controller
+</div>
+
+<p>At this point, you should have administrator privileges, but you&#8217;re going to need to make sure you&#8217;re running vmc v. 0.3.12 or later.  You can update the gem with</p>
+
+<div class="code">sudo gem update vmc</div>
+
+<p>Move over to your client machine and connect with vmc using the user account that you added as an admin.  Now you can use undocumented vmc commands like</p>
+
+<div class="code">vmc users</div>
+
+<p>to list users, or execute proxy commands like</p>
+
+<div class="code">vmc -u example_user@example.com passwd</div>
+
+<p>which will change the example user&#8217;s password.  You should also be able to delete and add users using the documented delete-user and add-user commands.</p>
+
+<p>This is helpful if one of your users forgets their password.  If you&#8217;ve forgotten the password for the original account you created, you should be able to register a new user, add that user as an admin (as described above), and then reset the password using the proxy method above.  I haven&#8217;t tried it yet, but I suspect that&#8217;s your best bet.</p>

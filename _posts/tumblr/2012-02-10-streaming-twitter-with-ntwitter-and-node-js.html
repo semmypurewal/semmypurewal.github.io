@@ -1,0 +1,88 @@
+---
+layout: post
+title: Streaming Twitter with nTwitter and Node.js
+date: '2012-02-10T17:34:00-08:00'
+tags:
+- nodejs twitter ntwitter tutorial
+tumblr_url: http://blog.semmy.me/post/17390049513/streaming-twitter-with-ntwitter-and-node-js
+---
+<p>Accessing the Twitter streaming API with Node.js is a breeze with the nTwitter module. This post should show you how to set up a twitter application, install ntwitter, and start getting data from the streaming API. Before we begin, you&#8217;ll need to set up a Node.js development environment in Vagrant by following the instructions  <a href="http://blog.semmy.me/2012/02/07/node-js-getting-started-with-vagrant.html" target="_blank">here</a>.</p>
+
+<p>If you&#8217;d like to create a new project in git (which I recommend), then you&#8217;ll want to delete the .git folder in the main directory of the node-dev-bootstrap repository.</p>
+
+<pre class="code">
+$ rm -rf .git
+</pre>
+
+<p>Enter the app directory, and initialize a new git repository.</p>
+
+<pre class="code">
+$ cd app
+$ git init
+</pre>
+
+<p>Next, login to your vagrant box, enter the app directory and add the ntwitter module via npm</p>
+
+<pre class="code">
+$ vagrant ssh
+$ cd app
+$ npm install ntwitter
+</pre>
+
+<p>To get set up, you&#8217;ll need to first set up an application by heading <a href="https://dev.twitter.com/apps/new" target="_blank">here</a> and logging in with your twitter credentials. Once you fill out the form and accept the licensing terms, you&#8217;ll need to go to the bottom of the page and click &#8220;create my access token&#8221; button. This will generate all of the credentials that you need to use the streaming API.</p>
+
+<p>Set up a file called credentials.js in your app directory. Since the app folder is shared between your vagrant VM and your local machine, you can use any text editor to set up this file in the app folder on your local machine. This file will be organized as a CommonJS module so you can include it via a <tt>require</tt> statement in your program All you need to do is replace the strings below with your actual credentials.</p>
+
+<pre class="code">var credentials = {
+    consumer_key: 'your consumer key here',
+    consumer_secret: 'your consumer secret here',
+    access_token_key: 'your access token key here',
+    access_token_secret: 'your access token secret here'
+};
+
+module.exports = credentials;
+</pre>
+
+<p>Next, we&#8217;ll create a simple program in our app directory that prints out tweets that contain any of the following words: &#8216;awesome&#8217;, &#8216;rad&#8217;, &#8216;cool,&#8217; &#8216;gnarly,&#8217; and &#8216;groovy.&#8217; Save the following code in a file called twitter.js.</p>
+
+<pre class="code">var twitter = require('ntwitter');
+var credentials = require('./credentials.js');
+
+var t = new twitter({
+    consumer_key: credentials.consumer_key,
+    consumer_secret: credentials.consumer_secret,
+    access_token_key: credentials.access_token_key,
+    access_token_secret: credentials.access_token_secret
+});
+
+t.stream(
+    'statuses/filter',
+    { track: ['awesome', 'cool', 'rad', 'gnarly', 'groovy'] },
+    function(stream) {
+        stream.on('data', function(tweet) {
+            console.log(tweet.text);
+        });
+    }
+);</pre>
+
+<p>If everything is set up correctly, you can run your app from your vagrant VM. If you don&#8217;t have a terminal window open that you&#8217;ve already run <tt>vagrant ssh</tt> in, you&#8217;ll need to do that first and enter the app directory.</p>
+
+<pre class="code">node twitter.js
+</pre>
+
+<p>and you should see tweets (assuming anyone is tweeting about awesome, rad or cool stuff, which is highly likely). To stop the stream, press CTRL-C to halt the node process.</p>
+
+<p>Note that it uses the credentials file that you created in the previous step. Why should we keep our credentials in a separate file? It&#8217;s always a good idea to keep private information (like API keys and passwords) out of your git repository. How do you do that? You can create a .gitignore file that contains the name of all files that you&#8217;d like to ignore:</p>
+
+<pre class="code">credentials.js
+</pre>
+
+<p>Now typing</p>
+
+<pre class="code">$ git status</pre>
+
+<p>should show that the only file that hasn&#8217;t been added is twitter.js and the ntwitter module. The credentials.js file is ignored. So go ahead and add the file and make a commit:</p>
+
+<pre class="code">$ git add .
+$ git commit -m "initial commit"
+</pre>

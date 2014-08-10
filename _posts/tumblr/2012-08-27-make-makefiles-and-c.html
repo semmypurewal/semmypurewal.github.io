@@ -1,0 +1,64 @@
+---
+layout: post
+title: Make, Makefiles and C++
+date: '2012-08-27T16:30:00-07:00'
+tags: []
+tumblr_url: http://blog.semmy.me/post/30334566329/make-makefiles-and-c
+---
+<p>In our Data Structures class this semester, we&#8217;re using C++ in a command-line environment. This means we&#8217;ll have the opportunity to use a very powerful build automation tool called <tt>make</tt>.</p>
+
+<p>Open up your text editor (emacs or vim) and enter the following simple C++ program. Save it as <tt>hello.cpp</tt>.</p>
+
+<pre class="code">#include &lt;iostream&gt;
+
+using std::cout;
+using std::endl;
+
+int main() {
+  cout &lt;&lt; "hello world!" &lt;&lt; endl;
+}</pre>
+
+<p>As we all know by now, we can go to the command line and compile it with something like:</p>
+
+<pre class="code">$ g++ -Wall hello.cpp -o hello</pre>
+
+<p>We&#8217;re actually going to be using a lot of warning flags this semester; they will encourage us to write higher quality (in this case, more portable) code. So, for instance, we might want to do something like this:</p>
+
+<pre class="code">$ g++ -Wall -Wextra -Werror hello.cpp -o hello</pre>
+
+<p>Obviously, this is a lot to type in anytime we want to compile. <tt>Make</tt> is a tool that allows us to use a declarative configuration file to specify complex dependencies and build actions for our computer programs. Open your text editor, type the following file and save it as <tt>Makefile</tt> in the same directory as the above C++ code.</p>
+
+<pre class="code">hello: hello.cpp
+        g++ -Wall -Wextra -Werror hello.cpp -o hello</pre>
+
+<p>The first line is the name of the target (in this case, <tt>hello</tt>) and the part following the colon is a list of dependencies. In other words, before the <tt>hello</tt> action is fired, <tt>make</tt> will ensure that hello.cpp exists, and if it doesn&#8217;t it will look for a target to build it. The second line is the action that will build the target.</p>
+
+<p>Note that the second line <b>requires</b> a tab since <tt>make</tt> relies on tabs to separate the dependencies from the action.</p>
+
+<p>To get this to run, simply drop to the command line and type the <tt>make</tt> command:</p>
+
+<pre class="code">$ make</pre>
+
+<p><tt>Make</tt> is relatively sophisticated; as an example, it allows for the use of variables. Why would we need variables? Consider a situation where we have numerous compile actions that all use the same warning flags. If we later decide we want to add or remove flags, we have to change every line that has an action. If, on the other hand, we have those stored as a variable, we only have to change them in one place:</p>
+
+<pre class="code">CC = g++
+CFLAGS = -Wall -Wextra -Werror -pedantic
+
+hello: hello.cpp
+        $(CC) $(CFLAGS) -o hello hello.cpp</pre>
+
+In this case, we&#8217;ve used variables for both the compiler (<tt>CC</tt>) and the flags (<tt>CFLAGS</tt>). Now if we later want to change the compiler, we simply have to update the <tt>CC</tt> variable!
+
+<p>I usually also build two other targets, one of which builds everything (<tt>all</tt>) and another that cleans up the current directory by removing the binary and any additional temporary files (<tt>clean</tt>). My final <tt>Makefile</tt> looks like this:</p>
+
+<pre class="code">CC = g++
+CFLAGS = -Wall -Wextra -Werror -Weffc++ -pedantic
+
+all: clean hello
+
+hello: hello.cpp
+        $(CC) $(CFLAGS) -o hello hello.cpp
+
+clean:
+        rm -f *~
+        rm -f hello</pre>

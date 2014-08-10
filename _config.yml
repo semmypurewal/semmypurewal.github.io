@@ -1,0 +1,5 @@
+name: semmy.me
+markdown: redcarpet
+pygments: true
+paginate: 3
+encoding: utf-8
