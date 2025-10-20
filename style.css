@@ -7,14 +7,21 @@ html, body {
   color: #000;
 }
 
-h1, h2, h3, h4, h5, h6,
-p, ul, ol, li {
+h1, h2, h3, h4, h5, h6, ul, ol, li, p {
   margin: 0;
   padding: 0;
 }
 
+h1 {
+  margin-bottom: 1rem;
+}
+
 h2 {
   margin-top: 1.5rem;
+}
+
+p {
+  margin-bottom: 1rem;
 }
 
 ul {
